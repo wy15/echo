@@ -40,7 +40,7 @@ func EncryptData(key, plaintext, addata []byte) (edata []byte, err error) {
 //Decrypt data function
 func DecryptData(key, ciphertext, addata []byte) ([]byte, error) {
 	if len(key) != 32 {
-		return nil, errors.New("key size must be 32 byte")
+		return nil, errors.New("key size must be 32 bytes")
 	}
 	c, err := chacha20poly1305.New(key)
 	if err != nil {
