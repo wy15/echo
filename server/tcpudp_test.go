@@ -1,15 +1,16 @@
-package tcpudp
+package server_test
 
 import (
-	"encrypt"
+	"echo/server"
 	"net"
 	"testing"
 	"time"
 )
 
 func TestTcpServe(t *testing.T) {
-	key := []byte("this is a key")
-	go TcpServe("localhost:8080", key)
+	key := make([]byte, 32)
+	copy(key, "this is a key")
+	//go server.TcpServe("localhost:8080", key)
 
 	tcpaddr, err := net.ResolveTCPAddr("tcp", "localhost:8080")
 	if err != nil {
@@ -22,12 +23,12 @@ func TestTcpServe(t *testing.T) {
 	defer tcpconn.Close()
 	tcpconn.SetDeadline(time.Now().Add(time.Duration(10) * time.Second))
 	plaintext := []byte("this is plaintext")
-	ciphertext, err := encrypt.EncryptData(key, plaintext, nil)
+	ciphertext, err := server.EncryptData(key, plaintext, nil)
 	if err != nil {
 		t.Errorf("EncryptData error:%v", err)
 	}
 
-	wlen, err := tcpconn.Write(ciphertext)
+	_, err = tcpconn.Write(ciphertext)
 	if err != nil {
 		t.Errorf("Write error:%v", err)
 	}

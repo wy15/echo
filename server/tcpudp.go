@@ -1,7 +1,6 @@
-package tcpudp
+package server
 
 import (
-	"encrypt"
 	"log"
 	"net"
 	"time"
@@ -65,7 +64,7 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte) {
 		return
 	}
 
-	plaintext, err := encrypt.DecryptData(encryptKey, receiveData, nil)
+	_, err := DecryptData(encryptKey, receiveData, nil)
 	if err != nil {
 		log.Printf("DecryptData error:%v", err)
 		return

@@ -1,4 +1,4 @@
-package encrypt
+package server
 
 import (
 	"crypto/rand"

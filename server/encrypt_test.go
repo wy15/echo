@@ -1,4 +1,4 @@
-package encrypt
+package server_test
 
 import "testing"
 
@@ -10,12 +10,12 @@ func TestEncryptAndDecryptData(t *testing.T) {
 	copy(addata, []byte("ok"))
 
 	//Test key length.Key must be 32 bytes.
-	if _, err := EncryptData(key[1:], []byte(plaintext), addata); err == nil {
+	if _, err := server.EncryptData(key[1:], []byte(plaintext), addata); err == nil {
 		t.Errorf("EncryptData error: %s", "key is not 32 length, this should be error, but not!")
 	}
 
 	//Test EncryptData main function.
-	ciphertext, err := EncryptData(key, []byte(plaintext), addata)
+	ciphertext, err := server.EncryptData(key, []byte(plaintext), addata)
 	if err != nil {
 		t.Errorf("EncryptData error: %v", err)
 	} else {
@@ -23,7 +23,7 @@ func TestEncryptAndDecryptData(t *testing.T) {
 	}
 
 	//Check decrypt
-	p, err := DecryptData(key, ciphertext, addata)
+	p, err := server.DecryptData(key, ciphertext, addata)
 	//c, err := chacha20poly1305.New(key)
 
 	//p, err := c.Open(nil, ciphertext[len(ciphertext)-c.NonceSize():], ciphertext[:len(ciphertext)-c.NonceSize()], addata)
