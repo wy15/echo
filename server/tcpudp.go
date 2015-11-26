@@ -16,15 +16,6 @@ func tcpListener(addr string) (*net.TCPListener, error) {
 	return net.ListenTCP("tcp", tcpaddr)
 }
 
-func udpServer(addr string) (*net.UDPConn, error) {
-	udpaddr, err := net.ResolveUDPAddr("udp", addr)
-	if err != nil {
-		return nil, err
-	}
-
-	return net.ListenUDP("udp", udpaddr)
-}
-
 func TcpServe(addr string, encryptKey []byte) error {
 	tcplistener, err := tcpListener(addr)
 	if err != nil {
@@ -46,26 +37,18 @@ func TcpServe(addr string, encryptKey []byte) error {
 func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte) {
 	defer tcpconn.Close()
 	tcpconn.SetDeadline(time.Now().Add(time.Duration(10) * time.Second))
-	receiveData := make([]byte, 100, 1024*1024)
-	var receiveDatalen int = 0
-	for {
-		datalen, err := tcpconn.Read(receiveData[receiveDatalen:])
-		if err != nil {
-			log.Printf("TCPConn Read error:%v", err)
-			return
-		}
-		receiveDatalen += datalen
-		if datalen == 0 {
-			break
-		}
+	receiveData := make([]byte, 50)
+	receiveDatalen, err := tcpconn.Read(receiveData)
+	if err != nil {
+		log.Printf("TCPConn Read error:%v", err)
+		return
 	}
 
 	if receiveDatalen == 0 {
 		return
 	}
 
-	log.Println(receiveData)
-	_, err := DecryptData(encryptKey, receiveData[:receiveDatalen], nil)
+	_, err = DecryptData(encryptKey, receiveData[:receiveDatalen], nil)
 	if err != nil {
 		log.Printf("DecryptData error:%v", err)
 		return
@@ -75,5 +58,38 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte) {
 	if err != nil {
 		log.Printf("tcpconn error:%v", err)
 	}
-	tcpconn.CloseWrite()
+}
+
+func UdpServe(addr string, key []byte) error {
+	udpaddr, err := net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		return err
+	}
+
+	udpconn, err := net.ListenUDP("udp", udpaddr)
+	for {
+		if err != nil {
+			log.Printf("udpServer error:%v", err)
+			continue
+		}
+		handleUDPConn(udpconn, key)
+	}
+}
+
+func handleUDPConn(udpconn *net.UDPConn, key []byte) {
+	 //udpconn.SetDeadline(time.Now().Add(time.Duration(10) * time.Second))
+	 receiveData := make([]byte, 50)
+	 receiveDatalen, addr, err := udpconn.ReadFrom(receiveData)
+	 if err != nil {
+		 log.Printf("udp readfrom error:%v", err)
+		 return
+	 }
+
+	 _, err = DecryptData(key, receiveData[:receiveDatalen], nil)
+	 if err != nil {
+		 log.Printf("DecryptData error:%v", err)
+		 return
+	 }
+
+	 homeip = addr.String()
 }
