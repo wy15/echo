@@ -64,7 +64,8 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte) {
 		return
 	}
 
-	_, err := DecryptData(encryptKey, receiveData, nil)
+	log.Println(receiveData)
+	_, err := DecryptData(encryptKey, receiveData[:receiveDatalen], nil)
 	if err != nil {
 		log.Printf("DecryptData error:%v", err)
 		return
@@ -74,5 +75,5 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte) {
 	if err != nil {
 		log.Printf("tcpconn error:%v", err)
 	}
-
+	tcpconn.CloseWrite()
 }
