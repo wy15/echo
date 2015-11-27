@@ -47,6 +47,9 @@ func DecryptData(key, ciphertext, addata []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	if len(ciphertext) <= c.NonceSize() {
+		return nil, errors.New("Illegal ciphertext")
+	}
 	nonce := ciphertext[len(ciphertext)-c.NonceSize():]
 
 	p, err := c.Open(nil, nonce, ciphertext[:len(ciphertext)-c.NonceSize()], addata)
