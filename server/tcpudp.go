@@ -1,6 +1,7 @@
 package server
 
 import (
+	"echo/libsodium"
 	"log"
 	"net"
 	"time"
@@ -47,7 +48,7 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte) {
 		return
 	}
 
-	_, err = DecryptData(encryptKey, receiveData[:receiveDatalen], nil)
+	_, err = libsodium.DecryptData(encryptKey, receiveData[:receiveDatalen])
 	if err != nil {
 		log.Printf("DecryptData error : %v", err)
 		return
@@ -84,7 +85,7 @@ func handleUDPConn(udpconn *net.UDPConn, key []byte) {
 		return
 	}
 
-	_, err = DecryptData(key, receiveData[:receiveDatalen], nil)
+	_, err = libsodium.DecryptData(key, receiveData[:receiveDatalen])
 	if err != nil {
 		log.Printf("DecryptData error : %v", err)
 		return
