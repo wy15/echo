@@ -78,6 +78,7 @@ func UdpServe(addr string, key []byte) error {
 }
 
 func handleUDPConn(udpconn *net.UDPConn, key []byte) {
+	udpconn.Close()
 	receiveData := make([]byte, 50)
 	receiveDatalen, addr, err := udpconn.ReadFrom(receiveData)
 

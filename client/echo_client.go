@@ -41,6 +41,7 @@ func udpClient(addr string, key, message []byte) error {
 	if err != nil {
 		return err
 	}
+	defer udpconn.Close()
 
 	_, err = udpconn.Write(ciphertext)
 	if err != nil {
