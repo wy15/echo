@@ -36,8 +36,8 @@ func TcpServe(addr string, encryptKey []byte) error {
 
 func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte) {
 	defer tcpconn.Close()
-	tcpconn.SetDeadline(time.Now().Add(time.Duration(10) * time.Second))
 	receiveData := make([]byte, 50)
+	tcpconn.SetReadDeadline(time.Now().Add(time.Duration(10) * time.Second))
 	receiveDatalen, err := tcpconn.Read(receiveData)
 	if err != nil {
 		log.Printf("TCPConn Read error : %v", err)
@@ -54,6 +54,7 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte) {
 		return
 	}
 
+	tcpconn.SetWriteDeadline(time.Now().Add(time.Duration(10) * time.Second))
 	_, err = tcpconn.Write([]byte(homeip))
 	if err != nil {
 		log.Printf("tcpconn error : %v", err)

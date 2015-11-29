@@ -22,7 +22,7 @@ func main() {
 			log.Printf("udp client error %v\n", err)
 		}
 
-		time.Sleep(time.Duration(10) * time.Minute * time.Millisecond)
+		time.Sleep(time.Duration(10) * time.Minute)
 	}
 }
 
