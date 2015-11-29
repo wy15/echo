@@ -52,12 +52,16 @@ func DecryptData(key, ciphertextaddnonce []byte) ([]byte, error) {
 		return nil, errors.New("key must be 32 bytes!")
 	}
 
-	nonce := ciphertextaddnonce[len(ciphertextaddnonce)-C.crypto_aead_chacha20poly1305_NPUBBYTES:]
-	ciphertext := ciphertextaddnonce[:len(ciphertextaddnonce)-C.crypto_aead_chacha20poly1305_NPUBBYTES]
-	plaintext := make([]byte, len(ciphertext)-C.crypto_aead_chacha20poly1305_ABYTES)
+	clen := len(ciphertextaddnonce) - C.crypto_aead_chacha20poly1305_NPUBBYTES
+	if clen-C.crypto_aead_chacha20poly1305_ABYTES <= 0 {
+		return nil, errors.New("Illegal ciphertext")
+	}
+	nonce := ciphertextaddnonce[clen:]
+	ciphertext := ciphertextaddnonce[:clen]
+	plaintext := make([]byte, clen-C.crypto_aead_chacha20poly1305_ABYTES)
 	var mlen C.ulonglong
 	r, err := C.crypto_aead_chacha20poly1305_decrypt((*C.uchar)(&plaintext[0]), &mlen, nil,
-		(*C.uchar)(&ciphertext[0]), (C.ulonglong)(len(ciphertext)), nil, 0, (*C.uchar)(&nonce[0]),
+		(*C.uchar)(&ciphertext[0]), (C.ulonglong)(clen), nil, 0, (*C.uchar)(&nonce[0]),
 		(*C.uchar)(&key[0]))
 
 	if err != nil {
