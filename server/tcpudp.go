@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bufio"
+	"echo/bpool"
 	"echo/libsodium"
 	"log"
 	"net"
@@ -22,6 +24,7 @@ func TcpServe(addr string, encryptKey []byte) error {
 	if err != nil {
 		return err
 	}
+	bpool := bpool.NewSizedBufferPool(20, 1024)
 
 	for {
 		tcpconn, err := tcplistener.AcceptTCP()
@@ -29,24 +32,32 @@ func TcpServe(addr string, encryptKey []byte) error {
 			log.Printf("AcceptTCP error : %v", err)
 			continue
 		}
+		buffer := bpool.Get()
 
-		go handleTCPConn(tcpconn, encryptKey)
+		go handleTCPConn(tcpconn, encryptKey, buffer)
 	}
 }
 
-func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte) {
+func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *byte.Buffer) {
 	defer tcpconn.Close()
-	receiveData := make([]byte, 50)
+	//receiveData := make([]byte, 50)
 	tcpconn.SetReadDeadline(time.Now().Add(time.Duration(20) * time.Second))
-	receiveDatalen, err := tcpconn.Read(receiveData)
-	if err != nil {
-		log.Printf("TCPConn Read error : %v", err)
-		return
+	//receiveDatalen, err := tcpconn.Read(receiveData)
+	bufReader := bufio.NewReader(tcpconn)
+	for i := 0; i < 5; i++ {
+		rData, err := bufReader.ReadBytes([]byte(","))
+		if err != nil {
+			if i == 4 || err.Timeout() {
+				log.Printf("TCPConn Read error : %v", err)
+				return
+			}
+			buffer.Write(rData)
+			continue
+		}
+		break
 	}
 
-	if receiveDatalen == 0 {
-		return
-	}
+	receiveDatalen := len(receiveData)
 
 	_, err = libsodium.DecryptData(encryptKey, receiveData[:receiveDatalen])
 	if err != nil {

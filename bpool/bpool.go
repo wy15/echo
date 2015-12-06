@@ -14,7 +14,7 @@ func NewSizedBufferPool(size, alloc int) *SizedBufferPool {
 	}
 }
 
-func (bp *SizeBufferPool) Get() (b *byte.Buffer) {
+func (bp *SizeBufferPool) Get() (b *bytes.Buffer) {
 	select {
 	case b = <-bp.c:
 	default:
