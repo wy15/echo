@@ -14,7 +14,7 @@ func NewSizedBufferPool(size, alloc int) *SizedBufferPool {
 	}
 }
 
-func (bp *SizeBufferPool) Get() (b *bytes.Buffer) {
+func (bp *SizedBufferPool) Get() (b *bytes.Buffer) {
 	select {
 	case b = <-bp.c:
 	default:
@@ -24,7 +24,7 @@ func (bp *SizeBufferPool) Get() (b *bytes.Buffer) {
 	return
 }
 
-func (bp *SizeBufferPool) Put(b *bytes.Buffer) {
+func (bp *SizedBufferPool) Put(b *bytes.Buffer) {
 	b.Reset()
 
 	if b.Cap() > bp.a {
