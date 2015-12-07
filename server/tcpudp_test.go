@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"bufio"
 	"echo/netstring"
 	"echo/server"
 	"net"
@@ -22,17 +23,19 @@ func TestTcpServe(t *testing.T) {
 		t.Fatalf("DialTCP error : %v\n", err)
 	}
 	defer tcpconn.Close()
-	tcpconn.SetDeadline(time.Now().Add(time.Duration(10) * time.Second))
+	//tcpconn.SetDeadline(time.Now().Add(time.Duration(10) * time.Second))
 	plaintext := []byte("this is plaintext")
 	ciphertext, err := server.EncryptData(key, plaintext, nil)
 	if err != nil {
 		t.Fatalf("EncryptData error : %v\n", err)
 	}
 
-	_, err = tcpconn.Write(netstring.Marshall(ciphertext))
+	bufWriter := bufio.NewWriter(tcpconn)
+	_, err = bufWriter.Write(netstring.Marshall(ciphertext))
 	if err != nil {
 		t.Fatalf("Write error : %v\n", err)
 	}
+	bufWriter.Flush()
 
 	rdata := make([]byte, 50)
 	rlen, err := tcpconn.Read(rdata)
