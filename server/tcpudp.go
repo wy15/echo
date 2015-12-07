@@ -48,13 +48,13 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer
 	//receiveData := make([]byte, 50)
 	var receiveData []byte
 	//tcpconn need read all data in 20 second ,otherwise Timeout() will be true
-	tcpconn.SetReadDeadline(time.Now().Add(time.Duration(20) * time.Second))
+	//tcpconn.SetReadDeadline(time.Now().Add(time.Duration(20) * time.Second))
 	//receiveDatalen, err := tcpconn.Read(receiveData)
 	bufReader := bufio.NewReader(tcpconn)
 	for {
 		rData, err := bufReader.ReadBytes([]byte(",")[0])
 		if err != nil {
-			if err == io.EOF {
+			if err != io.EOF {
 				log.Printf("TCPConn Read error : %v\n", err)
 				return
 			}
