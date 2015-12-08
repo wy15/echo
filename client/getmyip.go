@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"echo/libsodium"
+	"echo/netstring"
 	"flag"
+	"io"
 	"log"
 	"net"
 	"time"
@@ -41,18 +45,34 @@ func tcpClient(addr string, key, message []byte) ([]byte, error) {
 	}
 	defer tcpconn.Close()
 
-	tcpconn.SetWriteDeadline(time.Now().Add(time.Duration(10) * time.Second))
-	_, err = tcpconn.Write(ciphertext)
+	tcpconn.SetWriteDeadline(time.Now().Add(time.Duration(20) * time.Second))
+	_, err = tcpconn.Write(netstring.Marshall(ciphertext))
 	if err != nil {
 		return nil, err
 	}
 
 	rtn := make([]byte, 21)
-	tcpconn.SetReadDeadline(time.Now().Add(time.Duration(10) * time.Second))
-	n, err := tcpconn.Read(rtn)
-	if err != nil {
-		return nil, err
+	tcpconn.SetReadDeadline(time.Now().Add(time.Duration(20) * time.Second))
+	bufReader := bufio.NewReader(tcpconn)
+	var buf bytes.Buffer
+	for {
+		rData, err := bufReader.ReadBytes(',')
+		if err != nil {
+			if err == io.EOF {
+				return nil, err
+			}
+			buf.Write(rData)
+			continue
+		}
+		buf.Write(rData)
+		unmarshall, err := netstring.Unmarshall(buf.Bytes())
+		if err != nil {
+			if err == netstring.ErrNsLenNotEqaulOrgLen {
+				continue
+			}
+			return nil, err
+		}
+		break
 	}
-
-	return rtn[:n], nil
+	return unmarshall, nil
 }
