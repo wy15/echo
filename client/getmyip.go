@@ -51,10 +51,10 @@ func tcpClient(addr string, key, message []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	rtn := make([]byte, 21)
 	tcpconn.SetReadDeadline(time.Now().Add(time.Duration(20) * time.Second))
 	bufReader := bufio.NewReader(tcpconn)
 	var buf bytes.Buffer
+	var ip []byte
 	for {
 		rData, err := bufReader.ReadBytes(',')
 		if err != nil {
@@ -65,7 +65,7 @@ func tcpClient(addr string, key, message []byte) ([]byte, error) {
 			continue
 		}
 		buf.Write(rData)
-		unmarshall, err := netstring.Unmarshall(buf.Bytes())
+		ip, err = netstring.Unmarshall(buf.Bytes())
 		if err != nil {
 			if err == netstring.ErrNsLenNotEqaulOrgLen {
 				continue
@@ -74,5 +74,5 @@ func tcpClient(addr string, key, message []byte) ([]byte, error) {
 		}
 		break
 	}
-	return unmarshall, nil
+	return ip, nil
 }

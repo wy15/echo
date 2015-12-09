@@ -1,6 +1,9 @@
 package server_test
 
-import "testing"
+import (
+	"echo/server"
+	"testing"
+)
 
 func TestEncryptAndDecryptData(t *testing.T) {
 	key := make([]byte, 32)

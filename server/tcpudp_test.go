@@ -31,11 +31,15 @@ func TestTcpServe(t *testing.T) {
 	}
 
 	bufWriter := bufio.NewWriter(tcpconn)
-	_, err = bufWriter.Write(netstring.Marshall(ciphertext))
+	t.Logf("ciphertext is %x\n", ciphertext)
+	marshall := netstring.Marshall(ciphertext)
+	t.Logf("marshall data is %x, len is %d\n", marshall, len(marshall))
+	_, err = bufWriter.Write(marshall)
 	if err != nil {
 		t.Fatalf("Write error : %v\n", err)
 	}
 	bufWriter.Flush()
+	tcpconn.CloseWrite()
 
 	rdata := make([]byte, 50)
 	rlen, err := tcpconn.Read(rdata)

@@ -42,7 +42,7 @@ func Unmarshall(ns []byte) ([]byte, error) {
 	if err != nil {
 		return nil, ErrNsLenBytesConv
 	}
-	commaPos := bytes.Index(ns, []byte(","))
+	commaPos := bytes.LastIndex(ns, []byte(","))
 	if commaPos == -1 {
 		return nil, ErrNoComma
 	}
