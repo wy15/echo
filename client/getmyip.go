@@ -1,3 +1,12 @@
+/*********************************************************************************
+*      File Name     :     getmyip.go
+*      Created By    :     xbg@maqi.me
+*      Creation Date :     [2015-12-24 14:34]
+*      Last Modified :     [AUTO_UPDATE_BEFORE_SAVE]
+*      Description   :
+*      Copyright     :     2015 xbg@maqi.me
+*      License       :     Licensed under the Apache License, Version 2.0
+**********************************************************************************/
 package main
 
 import (

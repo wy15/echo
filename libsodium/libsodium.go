@@ -1,3 +1,12 @@
+/*********************************************************************************
+*      File Name     :     libsodium.go
+*      Created By    :     xbg@maqi.me
+*      Creation Date :     [2015-12-24 14:37]
+*      Last Modified :     [AUTO_UPDATE_BEFORE_SAVE]
+*      Description   :
+*      Copyright     :     2015 xbg@maqi.me
+*      License       :     Licensed under the Apache License, Version 2.0
+**********************************************************************************/
 package libsodium
 
 //#cgo pkg-config: libsodium

@@ -1,3 +1,12 @@
+/*********************************************************************************
+*      File Name     :     tcpudp.go
+*      Created By    :     xbg@maqi.me
+*      Creation Date :     [2015-12-24 14:37]
+*      Last Modified :     [AUTO_UPDATE_BEFORE_SAVE]
+*      Description   :
+*      Copyright     :     2015 xbg@maqi.me
+*      License       :     Licensed under the Apache License, Version 2.0
+**********************************************************************************/
 package server
 
 import (
@@ -62,7 +71,7 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer
 
 		buffer.Write(rData)
 
-		unmarshallData, err := netstring.Unmarshall(buffer.Bytes())
+		receiveData, err := netstring.Unmarshall(buffer.Bytes())
 		if err != nil {
 			if err == netstring.ErrNsLenNotEqaulOrgLen {
 				continue
@@ -71,7 +80,6 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer
 				return
 			}
 		}
-		receiveData = unmarshallData
 
 		break
 	}
