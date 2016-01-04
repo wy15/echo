@@ -62,7 +62,7 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer
 		rData, err := bufReader.ReadBytes(',')
 		if err != nil {
 			if err == io.EOF {
-				log.Printf("TCPConn Read error : %vrData=%x\n", err, rData)
+				log.Printf("TCPConn Read error rData=%x\n", rData)
 				return
 			}
 			buffer.Write(rData)
@@ -71,7 +71,7 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer
 
 		buffer.Write(rData)
 
-		receiveData, err := netstring.Unmarshall(buffer.Bytes())
+		receiveData, err = netstring.Unmarshall(buffer.Bytes())
 		if err != nil {
 			if err == netstring.ErrNsLenNotEqaulOrgLen {
 				continue
@@ -86,7 +86,7 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer
 
 	_, err := libsodium.DecryptData(encryptKey, receiveData)
 	if err != nil {
-		log.Printf("DecryptData error : %v\n", err)
+		log.Printf("tcp DecryptData error : %v\n", err)
 		return
 	}
 
@@ -104,18 +104,25 @@ func UdpServe(addr string, key []byte) error {
 	}
 
 	udpconn, err := net.ListenUDP("udp", udpaddr)
+	if err != nil {
+		log.Printf("udpServer error : %v\n", err)
+		return err
+	}
 	for {
-		if err != nil {
-			log.Printf("udpServer error : %v\n", err)
-			continue
-		}
 		handleUDPConn(udpconn, key)
 	}
 }
 
 func handleUDPConn(udpconn *net.UDPConn, key []byte) {
-	receiveData := make([]byte, 50)
+	var receiveData []byte
+	udpconn.SetReadDeadline(time.Now().Add(time.Duration(20) * time.Second))
 	receiveDatalen, addr, err := udpconn.ReadFrom(receiveData)
+
+	if operr, ok := err.(net.Error); ok {
+		if operr.Timeout() {
+			return
+		}
+	}
 
 	if err != nil {
 		log.Printf("udp readfrom error : %v\n", err)
@@ -124,7 +131,7 @@ func handleUDPConn(udpconn *net.UDPConn, key []byte) {
 
 	_, err = libsodium.DecryptData(key, receiveData[:receiveDatalen])
 	if err != nil {
-		log.Printf("DecryptData error : %v\n", err)
+		log.Printf("udp DecryptData error : %v\n", err)
 		return
 	}
 
