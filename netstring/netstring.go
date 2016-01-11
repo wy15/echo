@@ -15,6 +15,13 @@ import (
 	"strconv"
 )
 
+type Netstring struct {
+	l []byte `length`
+	s []byte `start`
+	c []byte `content`
+	e []byte `end`
+}
+
 var (
 	ErrNoColon             = errors.New("Can't found colon")
 	ErrNsLenBytesConv      = errors.New("nsLenBytes conv error")

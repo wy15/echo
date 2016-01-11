@@ -48,12 +48,13 @@ func TcpServe(addr string, encryptKey []byte) error {
 		}
 		buffer := bpool.Get()
 
-		go handleTCPConn(tcpconn, encryptKey, buffer)
+		go handleTCPConn(tcpconn, encryptKey, buffer, bpool)
 	}
 }
 
-func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer) {
+func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer, bpool *SizedBufferPool) {
 	defer tcpconn.Close()
+	defer bpool.Put(buffer)
 	var receiveData []byte
 	//tcpconn need read all data in 20 second ,otherwise Timeout() will be true
 	tcpconn.SetReadDeadline(time.Now().Add(time.Duration(20) * time.Second))
@@ -62,7 +63,7 @@ func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer
 		rData, err := bufReader.ReadBytes(',')
 		if err != nil {
 			if err == io.EOF {
-				log.Printf("TCPConn Read error rData=%x\n", rData)
+				log.Printf("TCPConn Read error\n")
 				return
 			}
 			buffer.Write(rData)
@@ -108,32 +109,53 @@ func UdpServe(addr string, key []byte) error {
 		log.Printf("udpServer error : %v\n", err)
 		return err
 	}
+
+	bpool := bpool.NewSizedBufferPool(20, 4096)
+
 	for {
-		handleUDPConn(udpconn, key)
+		buffer := bpool.Get()
+		handleUDPConn(udpconn, key, buffer)
+		bpool.Put(buffer)
 	}
 }
 
-func handleUDPConn(udpconn *net.UDPConn, key []byte) {
+func handleUDPConn(udpconn *net.UDPConn, key []byte, buffer *bytes.Buffer) {
 	var receiveData []byte
-	udpconn.SetReadDeadline(time.Now().Add(time.Duration(20) * time.Second))
-	receiveDatalen, addr, err := udpconn.ReadFrom(receiveData)
+	//udpconn.SetReadDeadline(time.Now().Add(time.Duration(20) * time.Second))
+	//receiveDatalen, addr, err := udpconn.ReadFrom(receiveData)
 
-	if operr, ok := err.(net.Error); ok {
-		if operr.Timeout() {
-			return
+	bufReader := bufio.NewReader(udpconn)
+	for {
+		rData, err := bufReader.ReadBytes(',')
+		if err != nil {
+			if err == io.EOF {
+				log.Printf("UDPConn Read error\n")
+				return
+			}
+			buffer.Write(rData)
+			continue
 		}
+
+		buffer.Write(rData)
+
+		receiveData, err = netstring.Unmarshall(buffer.Bytes())
+		if err != nil {
+			if err == netstring.ErrNsLenNotEqaulOrgLen {
+				continue
+			} else {
+				log.Printf("netstring unmarshall error : %v\n", err)
+				return
+			}
+		}
+
+		break
 	}
 
-	if err != nil {
-		log.Printf("udp readfrom error : %v\n", err)
-		return
-	}
-
-	_, err = libsodium.DecryptData(key, receiveData[:receiveDatalen])
+	_, err := libsodium.DecryptData(encryptKey, receiveData)
 	if err != nil {
 		log.Printf("udp DecryptData error : %v\n", err)
 		return
 	}
 
-	homeip = addr.String()
+	homeip = udpconn.RemoteAddr.String()
 }
