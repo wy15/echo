@@ -52,7 +52,7 @@ func TcpServe(addr string, encryptKey []byte) error {
 	}
 }
 
-func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer, bpool *SizedBufferPool) {
+func handleTCPConn(tcpconn *net.TCPConn, encryptKey []byte, buffer *bytes.Buffer, bpool *bpool.SizedBufferPool) {
 	defer tcpconn.Close()
 	defer bpool.Put(buffer)
 	var receiveData []byte
@@ -110,52 +110,30 @@ func UdpServe(addr string, key []byte) error {
 		return err
 	}
 
-	bpool := bpool.NewSizedBufferPool(20, 4096)
-
+	var receiveData = make([]byte, 1024)
 	for {
-		buffer := bpool.Get()
-		handleUDPConn(udpconn, key, buffer)
-		bpool.Put(buffer)
+		handleUDPConn(udpconn, key, receiveData)
 	}
 }
 
-func handleUDPConn(udpconn *net.UDPConn, key []byte, buffer *bytes.Buffer) {
-	var receiveData []byte
+func handleUDPConn(udpconn *net.UDPConn, key []byte, receiveData []byte) {
 	//udpconn.SetReadDeadline(time.Now().Add(time.Duration(20) * time.Second))
-	//receiveDatalen, addr, err := udpconn.ReadFrom(receiveData)
-
-	bufReader := bufio.NewReader(udpconn)
-	for {
-		rData, err := bufReader.ReadBytes(',')
-		if err != nil {
-			if err == io.EOF {
-				log.Printf("UDPConn Read error\n")
-				return
-			}
-			buffer.Write(rData)
-			continue
-		}
-
-		buffer.Write(rData)
-
-		receiveData, err = netstring.Unmarshall(buffer.Bytes())
-		if err != nil {
-			if err == netstring.ErrNsLenNotEqaulOrgLen {
-				continue
-			} else {
-				log.Printf("netstring unmarshall error : %v\n", err)
-				return
-			}
-		}
-
-		break
+	receiveDatalen, addr, err := udpconn.ReadFrom(receiveData)
+	if err != nil {
+		log.Printf("udpconn ReadFrom err : %v\n", err)
 	}
 
-	_, err := libsodium.DecryptData(encryptKey, receiveData)
+	receiveData, err = netstring.Unmarshall(receiveData[:receiveDatalen])
+	if err != nil {
+		log.Printf("netstring unmarshall error : %v\n", err)
+		return
+	}
+
+	_, err = libsodium.DecryptData(key, receiveData)
 	if err != nil {
 		log.Printf("udp DecryptData error : %v\n", err)
 		return
 	}
 
-	homeip = udpconn.RemoteAddr.String()
+	homeip = addr.String()
 }

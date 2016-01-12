@@ -2,6 +2,7 @@ package main
 
 import (
 	"echo/libsodium"
+	"echo/netstring"
 	"flag"
 	"log"
 	"net"
@@ -43,7 +44,7 @@ func udpClient(addr string, key, message []byte) error {
 	}
 	defer udpconn.Close()
 
-	_, err = udpconn.Write(ciphertext)
+	_, err = udpconn.Write(netstring.Marshall(ciphertext))
 	if err != nil {
 		return err
 	}
